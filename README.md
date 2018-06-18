@@ -63,7 +63,7 @@ This will get easier someday.
       --capabilities CAPABILITY_IAM \
       --region us-east-1 \
       --parameters \
-    ParameterKey="ButtonListenerTopic",ParameterValue="$(aws cloudformation describe-stacks --stack-name $sns_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerTopic\'].OutputValue --output text)" \
-    ParameterKey="ButtonListenerTopicRoleARN",ParameterValue="$(aws cloudformation describe-stacks --stack-name $sns_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerTopicRole\'].OutputValue --output text)" \
-    ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
-    ParameterKey="CertificateARN",ParameterValue="$cert_arn"
+        ParameterKey="ButtonListenerTopic",ParameterValue="$(aws cloudformation describe-stacks --stack-name $sns_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerTopic\'].OutputValue --output text)" \
+        ParameterKey="ButtonListenerTopicRoleARN",ParameterValue="$(aws cloudformation describe-stacks --stack-name $sns_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerTopicRole\'].OutputValue --output text)" \
+        ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
+        ParameterKey="CertificateARN",ParameterValue="$cert_arn"
