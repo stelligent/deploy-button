@@ -18,6 +18,11 @@ The `deploy-button` project utilizes several AWS services to get things working.
   * Approve/Deny
 * SSM Parameter: 
   * Approval Token
+* IoT:
+  * Thing
+  * Policy
+  * Rule
+  * Certificate
 
 Workflow:
 ------
