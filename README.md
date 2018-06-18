@@ -41,11 +41,29 @@ Commands:
 -----
 This will get easier someday.
 
-    aws cloudformation create-stack \
-      --stack-name test-ssm-$(date +%Y%m%d%H%M%S)" \
-      --template-body file://provisioning/ssm.yml
+    # need to input these manually for now
+    export iot_button_dsn=1234567890
+    export cert_arn=arn:aws:iot:us-east-1:1234567890:cert/123456abcdef7890
 
     aws cloudformation create-stack \
-      --stack-name test-sns-$(date +%Y%m%d%H%M%S)" \
-      --template-body file://provisiong/sns.yml \
+      --stack-name "test-ssm-$(date +%Y%m%d%H%M%S)" \
+      --template-body file://provisioning/ssm.yml
+
+    sns_stack_name="test-sns-$(date +%Y%m%d%H%M%S)"
+    aws cloudformation create-stack \
+      --stack-name $sns_stack_name \
+      --template-body file://provisioning/sns.yml \
       --capabilities CAPABILITY_IAM
+
+    # wait for sns stack to complete
+
+      aws cloudformation create-stack \
+      --stack-name "test-iot-button-$(date +%Y%m%d%H%M%S)" \
+      --template-body file://provisioning/iotbutton.yml \
+      --capabilities CAPABILITY_IAM \
+      --region us-east-1 \
+      --parameters \
+        ParameterKey="ButtonListenerTopic",ParameterValue="$(aws cloudformation describe-stacks --stack-name $sns_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerTopic\'].OutputValue --output text)" \
+        ParameterKey="ButtonListenerTopicRoleARN",ParameterValue="$(aws cloudformation describe-stacks --stack-name $sns_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerTopicRole\'].OutputValue --output text)" \
+        ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
+        ParameterKey="CertificateARN",ParameterValue="$cert_arn" 

@@ -37,3 +37,10 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       DisplayName: AWS CodePipeline Manual Approval Notification
+Outputs:
+  ButtonListenerTopic:
+    Description: The SNS Topic the Button will push to
+    Value: !Ref ButtonListenerTopic
+  ButtonListenerTopicRole:
+    Description: The ARN of Role of the Topic the Button will push to
+    Value: !GetAtt 'ButtonListenerTopicRole.Arn'

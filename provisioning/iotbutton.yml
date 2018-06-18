@@ -10,6 +10,10 @@ Parameters:
   CertificateARN:
     Type: String
     Description: The Amazon Resource Name (ARN) of the existing AWS IoT certificate.
+  ButtonListenerTopicRoleARN:
+    Type: String
+  ButtonListenerTopic:
+    Type: String
 Resources:
   IoTThing:
     Type: AWS::IoT::Thing
@@ -55,8 +59,8 @@ Resources:
       TopicRulePayload:
         Actions:
           - Sns:
-              RoleArn: !GetAtt 'SNSTopicRole.Arn'
-              TargetArn: !Ref 'SNSTopic'
+              RoleArn: !Ref 'ButtonListenerTopicRoleARN'
+              TargetArn: !Ref 'ButtonListenerTopic'
         AwsIotSqlVersion: '2015-10-08'
         RuleDisabled: false
         Sql: !Join
