@@ -1,0 +1,9 @@
+Description: "Create SSM Parameter"
+Resources:
+  BasicParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "ApprovalToken"
+      Type: "String"
+      Value: "token"
+      Description: "The approval token for the CodePipeline manual approval action"

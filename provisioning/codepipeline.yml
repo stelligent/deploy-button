@@ -8,12 +8,7 @@ Description: >
   artifact to automatically create stacks and change sets.
   **WARNING** This template creates an Amazon EC2 instance. You will be billed
   for the AWS resources used when you create a stack using this template.
-
-Parameters:
-  Email:
-    Description: The email address where CodePipeline sends pipeline notifications
-    Type: String
-
+  
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -43,13 +38,6 @@ Resources:
     Properties:
       VersioningConfiguration:
         Status: Enabled
-
-  CodePipelineSNSTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      Subscription:
-        - Endpoint: !Ref Email
-          Protocol: email
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline

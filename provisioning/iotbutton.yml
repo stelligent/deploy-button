@@ -10,18 +10,6 @@ Parameters:
   CertificateARN:
     Type: String
     Description: The Amazon Resource Name (ARN) of the existing AWS IoT certificate.
-  SNSTopicName:
-    Type: String
-    Default: aws-iot-button-sns-topic
-    Description: The name of the Amazon SNS topic for AWS CloudFormation to create.
-  SNSTopicRoleName:
-    Type: String
-    Default: aws-iot-button-sns-topic-role
-    Description: The name of the IAM role for AWS CloudFormation to create. This IAM
-      role allows AWS IoT to send notifications to the Amazon SNS topic.
-  EmailAddress:
-    Type: String
-    Description: The email address for the Amazon SNS topic to send information to.
 Resources:
   IoTThing:
     Type: AWS::IoT::Thing
@@ -56,40 +44,7 @@ Resources:
     Properties:
       Principal: !Ref 'CertificateARN'
       ThingName: !Ref 'IoTThing'
-  SNSTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      DisplayName: AWS IoT Button Press Notification
-      Subscription:
-        - Endpoint: !Ref 'EmailAddress'
-          Protocol: email
-      TopicName: !Ref 'SNSTopicName'
-  SNSTopicRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: iot.amazonaws.com
-            Action: sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: sns:Publish
-                Resource: !Join
-                  - ''
-                  - - 'arn:aws:sns:'
-                    - !Ref 'AWS::Region'
-                    - ':'
-                    - !Ref 'AWS::AccountId'
-                    - ':'
-                    - !Ref 'SNSTopicName'
-          PolicyName: !Ref 'SNSTopicRoleName'
+
   IoTTopicRule:
     Type: AWS::IoT::TopicRule
     Properties:

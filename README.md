@@ -35,3 +35,17 @@ Once the pipeline stops at the approval action, your IoT button can accept or re
 * Button generates SNS notification
 * Lambda Receives SNS notification and looks up approval token
 * Lambda calls code Pipeline API with approval token
+
+
+Commands:
+-----
+This will get easier someday.
+
+    aws cloudformation create-stack \
+      --stack-name test-ssm-$(date +%Y%m%d%H%M%S)" \
+      --template-body file://provisioning/ssm.yml
+
+    aws cloudformation create-stack \
+      --stack-name test-sns-$(date +%Y%m%d%H%M%S)" \
+      --template-body file://provisiong/sns.yml \
+      --capabilities CAPABILITY_IAM
