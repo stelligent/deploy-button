@@ -3,6 +3,8 @@ deploy-button :ship: :red_circle:
 
 CodePipeline supports Manual Approval actions that allow you to put manual gates in your pipeline. IoT Buttons allow you to have a real world button hooked up to a Lambda function. This project configures your IoT button to approve (or reject) your CodePipeline manual approval steps.
 
+*This is currently a work in progress; nothing actually is working right now.*
+
 What's in the box
 ------
 
