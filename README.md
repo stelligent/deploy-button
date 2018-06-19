@@ -44,6 +44,7 @@ This will get easier someday.
     # need to input these manually for now
     export iot_button_dsn=1234567890
     export cert_arn=arn:aws:iot:us-east-1:1234567890:cert/123456abcdef7890
+    export lambda_bucket=test-lambda-functions-$(date +%Y%m%d%H%M%S)
 
     aws cloudformation create-stack \
       --stack-name "test-ssm-$(date +%Y%m%d%H%M%S)" \
@@ -55,7 +56,7 @@ This will get easier someday.
       --template-body file://provisioning/sns.yml \
       --capabilities CAPABILITY_IAM
 
-    # wait for sns stack to complete
+    # wait for sns stack to complete, about 30s
 
     aws cloudformation create-stack \
       --stack-name "test-iot-button-$(date +%Y%m%d%H%M%S)" \
@@ -67,3 +68,25 @@ This will get easier someday.
         ParameterKey="ButtonListenerTopicRoleARN",ParameterValue="$(aws cloudformation describe-stacks --stack-name $sns_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerTopicRole\'].OutputValue --output text)" \
         ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
         ParameterKey="CertificateARN",ParameterValue="$cert_arn"
+
+    # put lambda functions into S3 so the CloudFormation stacks can find them
+    pushd lambda
+      aws s3 mb s3://${lambda_bucket}
+      rm -rf tmp
+      mkdir -p tmp
+      zip tmp/receive_button_press.zip receive_button_press.py
+      zip tmp/receive_manual_approval.zip receive_manual_approval.py
+      aws s3 cp tmp/receive_button_press.zip s3://${lambda_bucket}/receive_button_press.zip
+      aws s3 cp tmp/receive_manual_approval.zip s3://${lambda_bucket}/receive_manual_approval.zip
+      rm -rf tmp
+    popd
+
+    aws cloudformation create-stack \
+      --stack-name "test-lambdas-$(date +%Y%m%d%H%M%S)" \
+      --template-body file://provisioning/lambdas.yml \
+      --capabilities CAPABILITY_IAM \
+      --disable-rollback \
+      --parameters \
+        ParameterKey="SourceBucket",ParameterValue="${lambda_bucket}" \
+        ParameterKey="ReceiveButtonPressZip",ParameterValue="receive_button_press.zip" \
+        ParameterKey="ReceiveManualApprovalNotificationZip",ParameterValue="receive_manual_approval.zip"
