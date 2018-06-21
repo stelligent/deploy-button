@@ -5,8 +5,8 @@ phases:
     commands:
       - rm -rf artifacts
       - mkdir -p artifacts
-      - zip artifacts/receive_button_press.zip receive_button_press.py
-      - zip artifacts/receive_manual_approval.zip receive_manual_approval.py
+      - zip artifacts/receive_button_press.zip lambda/receive_button_press.py
+      - zip artifacts/receive_manual_approval.zip lambda/receive_manual_approval.py
 
 artifacts:
   files:
