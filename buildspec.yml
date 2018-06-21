@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - rm -rf artifacts
+      - mkdir -p artifacts
+      - zip artifacts/receive_button_press.zip receive_button_press.py
+      - zip artifacts/receive_manual_approval.zip receive_manual_approval.py
+
+artifacts:
+  files:
+    - artifacts/receive_button_press.zip
+    - artifacts/receive_manual_approval.zip
