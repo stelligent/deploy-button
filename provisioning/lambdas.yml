@@ -89,3 +89,7 @@ Resources:
                 Action:
                   - ec2:DescribeImages
                 Resource: '*'
+Outputs:
+  ButtonListenerLambdaArn:
+    Description: The Lambda Function that the button press will trigger
+    Value: !GetAtt 'ReceiveButtonPress.Arn'

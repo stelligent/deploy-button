@@ -14,7 +14,6 @@ The `deploy-button` project utilizes several AWS services to get things working.
   *  Sample Pipeline
 * SNS Topics:
   * Manual Approvals
-  * Button presses
 * Lambda Functions:
   * Save Approval Token
   * Approve/Deny
@@ -58,19 +57,6 @@ This will get easier someday.
       --template-body file://provisioning/sns.yml \
       --capabilities CAPABILITY_IAM
 
-    # wait for sns stack to complete, about 30s
-
-    aws cloudformation create-stack \
-      --stack-name "test-iot-button-$(date +%Y%m%d%H%M%S)" \
-      --template-body file://provisioning/iotbutton.yml \
-      --capabilities CAPABILITY_IAM \
-      --region us-east-1 \
-      --parameters \
-        ParameterKey="ButtonListenerTopic",ParameterValue="$(aws cloudformation describe-stacks --stack-name $sns_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerTopic\'].OutputValue --output text)" \
-        ParameterKey="ButtonListenerTopicRoleARN",ParameterValue="$(aws cloudformation describe-stacks --stack-name $sns_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerTopicRole\'].OutputValue --output text)" \
-        ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
-        ParameterKey="CertificateARN",ParameterValue="$cert_arn"
-
     # put lambda functions into S3 so the CloudFormation stacks can find them
     pushd lambda
       aws s3 mb s3://${lambda_bucket}
@@ -83,8 +69,9 @@ This will get easier someday.
       rm -rf tmp
     popd
 
+    lambdas_stack_name=test-lambdas-$(date +%Y%m%d%H%M%S)
     aws cloudformation create-stack \
-      --stack-name "test-lambdas-$(date +%Y%m%d%H%M%S)" \
+      --stack-name "$lambdas_stack_name" \
       --template-body file://provisioning/lambdas.yml \
       --capabilities CAPABILITY_IAM \
       --disable-rollback \
@@ -92,3 +79,15 @@ This will get easier someday.
         ParameterKey="SourceBucket",ParameterValue="${lambda_bucket}" \
         ParameterKey="ReceiveButtonPressZip",ParameterValue="receive_button_press.zip" \
         ParameterKey="ReceiveManualApprovalNotificationZip",ParameterValue="receive_manual_approval.zip"
+    # wait for lambda stack to complete, about 30s
+    sleep 60
+
+    aws cloudformation create-stack \
+      --stack-name "test-iot-button-$(date +%Y%m%d%H%M%S)" \
+      --template-body file://provisioning/iotbutton.yml \
+      --capabilities CAPABILITY_IAM \
+      --region us-east-1 \
+      --parameters \
+        ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
+        ParameterKey="CertificateARN",ParameterValue="$cert_arn" \
+        ParameterKey="ButtonListenerLambdaArn",ParameterValue="$(aws cloudformation describe-stacks --stack-name $lambdas_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerLambdaArn\'].OutputValue --output text)"
