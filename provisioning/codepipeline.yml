@@ -1,36 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >
-  AWS CloudFormation Sample Template Continuous Delievery: This template
-  builds an AWS CodePipeline pipeline that implements a continuous delivery release
-  process for AWS CloudFormation stacks. Submit a CloudFormation source artifact
-  to an Amazon S3 location before building the pipeline. The pipeline uses the
-  artifact to automatically create stacks and change sets.
-  **WARNING** This template creates an Amazon EC2 instance. You will be billed
-  for the AWS resources used when you create a stack using this template.
-  
-Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: "CodePipeline Settings"
-        Parameters:
-          - PipelineName
-          - S3Bucket
-          - SourceS3Key
-          - Email
-      - Label:
-          default: "Test Stack Settings"
-        Parameters:
-          - TestStackName
-          - TemplateFileName
-          - TestStackConfig
-      - Label:
-          default: "Production Stack Settings"
-        Parameters:
-          - ChangeSetName
-          - ProdStackName
-          - ProdStackConfig
+  Builds a CodePipeline to deploy the manual gate deployment button, but also uses the manual 
+  gate deployment button to deploy it.
+
+Parameters:
+  GitHubToken:
+    Type: String
+    NoEcho: true
 
 Resources:
   ArtifactStoreBucket:
@@ -38,7 +15,6 @@ Resources:
     Properties:
       VersioningConfiguration:
         Status: Enabled
-
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -46,101 +22,74 @@ Resources:
         Location: !Ref 'ArtifactStoreBucket'
         Type: S3
       DisableInboundStageTransitions: []
-      Name: "Sample Pipeline with Manual Step"
-      RoleArn: !GetAtt [PipelineRole, Arn]
+      Name: "SamplePipelinewithManualStep"
+      RoleArn: !Ref PipelineRole
       Stages:
-        - Name: S3Source
-          Actions:
-            - Name: TemplateSource
-              ActionTypeId:
-                Category: Source
-                Owner: AWS
-                Provider: S3
-                Version: '1'
-              Configuration:
-                S3Bucket: !Ref 'S3Bucket'
-                S3ObjectKey: !Ref 'SourceS3Key'
-              OutputArtifacts:
-                - Name: TemplateSource
-              RunOrder: '1'
-        - Name: TestStage
-          Actions:
-            - Name: CreateStack
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: '1'
-              InputArtifacts:
-                - Name: TemplateSource
-              Configuration:
-                ActionMode: REPLACE_ON_FAILURE
-                RoleArn: !GetAtt [CFNRole, Arn]
-                StackName: !Ref TestStackName
-                TemplateConfiguration: !Sub "TemplateSource::${TestStackConfig}"
-                TemplatePath: !Sub "TemplateSource::${TemplateFileName}"
-              RunOrder: '1'
-            - Name: ApproveTestStack
-              ActionTypeId:
-                Category: Approval
-                Owner: AWS
-                Provider: Manual
-                Version: '1'
-              Configuration:
-                NotificationArn: !Ref CodePipelineSNSTopic
-                CustomData: !Sub 'Do you want to create a change set against the production stack and delete the ${TestStackName} stack?'
-              RunOrder: '2'
-            - Name: DeleteTestStack
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: '1'
-              Configuration:
-                ActionMode: DELETE_ONLY
-                RoleArn: !GetAtt [CFNRole, Arn]
-                StackName: !Ref TestStackName
-              RunOrder: '3'
-        - Name: ProdStage
-          Actions:
-            - Name: CreateChangeSet
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: '1'
-              InputArtifacts:
-                - Name: TemplateSource
-              Configuration:
-                ActionMode: CHANGE_SET_REPLACE
-                RoleArn: !GetAtt [CFNRole, Arn]
-                StackName: !Ref ProdStackName
-                ChangeSetName: !Ref ChangeSetName
-                TemplateConfiguration: !Sub "TemplateSource::${ProdStackConfig}"
-                TemplatePath: !Sub "TemplateSource::${TemplateFileName}"
-              RunOrder: '1'
-            - Name: ApproveChangeSet
-              ActionTypeId:
-                Category: Approval
-                Owner: AWS
-                Provider: Manual
-                Version: '1'
-              Configuration:
-                NotificationArn: !Ref CodePipelineSNSTopic
-                CustomData: !Sub 'A new change set was created for the ${ProdStackName} stack. Do you want to implement the changes?'
-              RunOrder: '2'
-            - Name: ExecuteChangeSet
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: '1'
-              Configuration:
-                ActionMode: CHANGE_SET_EXECUTE
-                ChangeSetName: !Ref ChangeSetName
-                RoleArn: !GetAtt [CFNRole, Arn]
-                StackName: !Ref ProdStackName
-              RunOrder: '3'
+        - name: Source
+          actions:
+            - inputArtifacts: []
+              name: Source
+              actionTypeId:
+                category: Source
+                owner: ThirdParty
+                version: '1'
+                provider: GitHub
+              outputArtifacts:
+                - name: MyApp
+              configuration:
+                Owner: stelligent
+                Repo: deploy-button
+                PollForSourceChanges: 'false'
+                Branch: master
+                OAuthToken: !Ref GitHubToken
+              runOrder: 1
+        - name: Build
+          actions:
+            - inputArtifacts:
+                - name: MyApp
+              name6: Build
+              actionTypeId:
+                category: Build
+                owner: AWS
+                version: '1'
+                provider: CodeBuild
+              outputArtifacts:
+                - name7: MyAppBuilt
+              configuration:
+                ProjectName: JonnyTest
+              runOrder: 1
+        - name8: manual-approval
+          actions:
+            - inputArtifacts: []
+              name9: jonny-says-so
+              actionTypeId:
+                category: Approval
+                owner: AWS
+                version: '1'
+                provider: Manual
+              outputArtifacts: []
+              configuration:
+                NotificationArn: arn:aws:sns:us-east-1:324320755747:aws-iot-button-sns-topic
+              runOrder: 1
+        - name0: Staging
+          actions:
+            - inputArtifacts:
+                - name10: MyApp
+              name11: jonny-test-iot-button-20180618153106
+              actionTypeId:
+                category: Deploy
+                owner: AWS
+                version: '1'
+                provider: CloudFormation
+              outputArtifacts: []
+              configuration:
+                StackName: jonny-test-iot-button-20180618153106
+                ActionMode: CREATE_UPDATE
+                RoleArn: arn:aws:iam::324320755747:role/basic-pipeline-CFNRole-100HDE2HLSALM
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: MyApp::iotbutton.yml
+              runOrder: 1
+
   CFNRole:
     Type: AWS::IAM::Role
     Properties:
@@ -193,3 +142,48 @@ Resources:
                 - 'sns:Publish'
                 Effect: Allow
                 Resource: '*'
+  PipelineBuildStep:  
+    Type: "AWS::CodeBuild::Project"
+    Properties: 
+      Artifacts:
+        Name: button_press_lambas
+        Type: CODEPIPELINE
+      Description: "Zip with lambda function code inside"
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/ubuntu-base:14.04
+      Name: DeployButtonLambdaBuild
+      ServiceRole: !Ref CodeBuildRole
+      Source:
+        Type: CODEPIPELINE 
+      TimeoutInMinutes: 5
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [codebuild.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyName: CodeBuildAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                - 'logs:*'
+                - 'ec2:CreateNetworkInterface'
+                - 'ec2:DescribeNetworkInterfaces'
+                - 'ec2:DeleteNetworkInterface'
+                - 'ec2:DescribeSubnets'
+                - 'ec2:DescribeSecurityGroups'
+                - 'ec2:DescribeDhcpOptions'
+                - 'ec2:DescribeVpcs'
+                - 'ec2:CreateNetworkInterfacePermission'
+                Effect: Allow
+                Resource: '*'
+ 
