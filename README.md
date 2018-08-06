@@ -40,11 +40,39 @@ Once the pipeline stops at the approval action, your IoT button can accept or re
 
 Commands:
 -----
-This will get easier someday.
+First you have to configure the IoT button to connect to your AWS account. This is done by create keys and certificates that you'll need to upload to the button. First we'll create the keys and certs:
 
-    # need to input these manually for now
+    # first thing: generate IOT cert
+    aws iot create-keys-and-certificate --set-as-active --output json > keys-and-cert.json
+    export cert_arn=$(cat keys-and-cert.json | jq '.certificateArn' | tr -d '"')
+    cat keys-and-cert.json | jq '.certificatePem' | tr -d '"' | awk '{gsub(/\\n/,"\n")}1' > certificate.pem
+    cat keys-and-cert.json | jq '.keyPair.PrivateKey' | tr -d '"' | awk '{gsub(/\\n/,"\n")}1' > private.key
+    rm keys-and-cert.json
+
+You'll also want to run these two commands and note the output:
+    aws iot describe-endpoint | jq .endpointAddress | tr -d '"' | awk -F. '{ print $1}'
+    aws iot describe-endpoint | jq .endpointAddress | tr -d '"' | awk -F. '{ print $3}'
+
+Next is the annoying bit: the IoT button is configured by connecting to it's wireless network and pulling up a webpage. You'll need to put the IoT button into configuration mode, connect to it from your computer, and then enter in the appropriate information.
+1. Hold down the IoT button for 10 seconds, until the light begins flashing blue.
+2. A wireless network will appear, named something like `Button-ConfigureMe`, connect to it.
+3. Navigate to http://192.168.0.1/index.html
+4. Enter your wifi information -- *note*: if you're on a network that configures wifi via a redirect, you won't be able to use your IoT button.
+5. Under `AWS IoT Configuration`
+  * For `Certificate` upload the file you created above `certificate.pem`
+  * For `Private Key` uploaded the file you created above `private.key`
+  * For `Endpoint Subdomain` enter the output from the first command above.
+  * For `Region`, enter the output from the second command above.
+ 6. Check the agreement to terms and conditions box
+ 7. Click `Configure`
+ 8. Reconnect to your nomal wireless network.
+
+Now that the IoT button is configured, we can set up the resources to support it. You'll need to set the values of the first two variables.
+
+
+    # The DSN will be on the back of your IoT button
     export iot_button_dsn=1234567890
-    export cert_arn=arn:aws:iot:us-east-1:1234567890:cert/123456abcdef7890
+    # this can be whatever you like, leaving it as is should work too.
     export lambda_bucket=test-lambda-functions-$(date +%Y%m%d%H%M%S)
 
     aws cloudformation create-stack \
