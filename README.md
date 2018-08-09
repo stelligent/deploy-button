@@ -67,7 +67,7 @@ Next is the annoying bit: the IoT button is configured by connecting to it's wir
  7. Click `Configure`
  8. Reconnect to your nomal wireless network.
 
-Now that the IoT button is configured, we can set up the resources to support it. You'll need to set the values of the first two variables.
+The IoT button will blink red -- that's because we're doing things slightly out of order than it prefers, so don't worry about it. With IoT button is configured, we can set up the resources to support it. You'll need to set the values of the first two variables.
 
 
     # The DSN will be on the back of your IoT button
@@ -119,3 +119,18 @@ Now that the IoT button is configured, we can set up the resources to support it
         ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
         ParameterKey="CertificateARN",ParameterValue="$cert_arn" \
         ParameterKey="ButtonListenerLambdaArn",ParameterValue="$(aws cloudformation describe-stacks --stack-name $lambdas_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerLambdaArn\'].OutputValue --output text)"
+
+Bonus:
+-----
+This project leverages IoT, which you may need to troubleshoot. Unfortunately, IoT doesn't come with CloudWatch Logs enabled. You can use this template and command to enable IoT pushing logs to CloudWatch logs on your account.
+
+    iot_logging_role_stack="iot-log-role-$(date +%Y%m%d%H%M%S)"
+    aws cloudformation create-stack \
+      --stack-name $iot_logging_role_stack \
+      --template-body file://provisioning/iot-log-role.yml \
+      --capabilities CAPABILITY_IAM
+    # wait for stack to complete
+    sleep 30
+    aws iot set-v2-logging-options \
+        --role-arn $(aws cloudformation describe-stacks --stack-name $iot_logging_role_stack --query Stacks[*].Outputs[?OutputKey==\'IoTLogRole\'].OutputValue --output text) \
+        --default-log-level INFO
