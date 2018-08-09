@@ -3,11 +3,11 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Creates required SNS topics to support manual actions from CodePipeline and an IoT Button
 
 Resources:
-  ButtonListenerTopic:
+  PipelineListenerTopic:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: AWS IoT Button Press Notification
-  ButtonListenerTopicRole:
+      DisplayName: AWS Code Pipeline Notification
+  PipelineListenerTopicRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -15,7 +15,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: iot.amazonaws.com
+              Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Path: /
       Policies:
@@ -31,16 +31,37 @@ Resources:
                     - ':'
                     - !Ref 'AWS::AccountId'
                     - ':'
-                    - !Ref 'ButtonListenerTopic'
-          PolicyName: 'ButtonListenerTopicRolePolicy'
+                    - !Ref 'PipelineListenerTopic'
+              - Effect: Allow
+                Action: logs:CreateLogGroup
+                Resource: !Join
+                  - ''
+                  - - 'arn:aws:logs:'
+                    - !Ref 'AWS::Region'
+                    - ':'
+                    - !Ref 'AWS::AccountId'
+                    - ':*'
+              # this is okay for now, but when we merge the templates together, this should refer to the lambda function's logs specifically
+              - Effect: Allow
+                Action: 
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Join
+                  - ''
+                  - - 'arn:aws:logs:'
+                    - !Ref 'AWS::Region'
+                    - ':'
+                    - !Ref 'AWS::AccountId'
+                    - ':*'
+          PolicyName: 'PipelineListenerTopicRolePolicy'
   CodePipelineSNSTopic:
     Type: AWS::SNS::Topic
     Properties:
       DisplayName: AWS CodePipeline Manual Approval Notification
 Outputs:
-  ButtonListenerTopic:
+  PipelineListenerTopic:
     Description: The SNS Topic the Button will push to
-    Value: !Ref ButtonListenerTopic
-  ButtonListenerTopicRole:
+    Value: !Ref PipelineListenerTopic
+  PipelineListenerTopicRole:
     Description: The ARN of Role of the Topic the Button will push to
-    Value: !GetAtt 'ButtonListenerTopicRole.Arn'
+    Value: !GetAtt 'PipelineListenerTopicRole.Arn'
