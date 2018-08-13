@@ -92,9 +92,9 @@ The IoT button will blink red -- that's because we're doing things slightly out 
       rm -rf tmp
       mkdir -p tmp
       zip tmp/receive_button_press.zip receive_button_press.py
-      zip tmp/receive_manual_approval.zip receive_manual_approval.py
+      zip tmp/send_notification.zip send_notification.py
       aws s3 cp tmp/receive_button_press.zip s3://${lambda_bucket}/receive_button_press.zip
-      aws s3 cp tmp/receive_manual_approval.zip s3://${lambda_bucket}/receive_manual_approval.zip
+      aws s3 cp tmp/send_notification.zip s3://${lambda_bucket}/send_notification.zip
       rm -rf tmp
     popd
 
@@ -107,7 +107,7 @@ The IoT button will blink red -- that's because we're doing things slightly out 
       --parameters \
         ParameterKey="SourceBucket",ParameterValue="${lambda_bucket}" \
         ParameterKey="ReceiveButtonPressZip",ParameterValue="receive_button_press.zip" \
-        ParameterKey="SendNotificationZip",ParameterValue="receive_manual_approval.zip"
+        ParameterKey="SendNotificationZip",ParameterValue="send-notification.zip"
     # wait for lambda stack to complete, about 30s
     sleep 60
 
