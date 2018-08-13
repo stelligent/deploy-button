@@ -19,7 +19,7 @@ Resources:
       Code:
         S3Bucket: !Ref 'SourceBucket'
         S3Key: !Ref 'ReceiveButtonPressZip'
-      Handler: 'RecieveButtonPress'
+      Handler: 'receive_button_press.handler'
       Role: !GetAtt 'RecieveButtonPressExecutionRole.Arn'
       Runtime: 'python2.7'
       Timeout: '30'
@@ -57,7 +57,7 @@ Resources:
       Code:
         S3Bucket: !Ref 'SourceBucket'
         S3Key: !Ref 'ReceiveManualApprovalNotificationZip'
-      Handler: 'ReceiveManualApprovalNotification'
+      Handler: 'ReceiveManualApprovalNotification.ReceiveManualApprovalNotification'
       Role: !GetAtt 'ReceiveManualApprovalNotificationExecutionRole.Arn'
       Runtime: 'python2.7'
       Timeout: '30'
