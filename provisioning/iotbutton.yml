@@ -58,10 +58,17 @@ Resources:
         Actions:
           - Lambda:
               FunctionArn: !Ref 'ButtonListenerLambdaArn'
-        AwsIotSqlVersion: '2015-10-08'
         RuleDisabled: false
         Sql: !Join
           - ''
           - - SELECT * FROM 'iotbutton/
             - !Ref 'IoTButtonDSN'
             - ''''
+  ButtonPressLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref ButtonListenerLambdaArn
+      Principal: iot.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !GetAtt IoTTopicRule.Arn
