@@ -1,0 +1,9 @@
+Description: "Create SSM Parameter"
+Resources:
+  BasicParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "DummyKey"
+      Type: "String"
+      Value: "DummyKey"
+      Description: "Dummy key. We're just using this an example of something deploying."
