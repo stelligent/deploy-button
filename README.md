@@ -72,6 +72,7 @@ The IoT button will blink red -- that's because we're doing things slightly out 
 
     # The DSN will be on the back of your IoT button
     export iot_button_dsn=1234567890
+    export github_token=12345678908754321
     # this can be whatever you like, leaving it as is should work too.
     export lambda_bucket=test-lambda-functions-$(date +%Y%m%d%H%M%S)
 
@@ -106,7 +107,7 @@ The IoT button will blink red -- that's because we're doing things slightly out 
       --parameters \
         ParameterKey="SourceBucket",ParameterValue="${lambda_bucket}" \
         ParameterKey="ReceiveButtonPressZip",ParameterValue="receive_button_press.zip" \
-        ParameterKey="ReceiveManualApprovalNotificationZip",ParameterValue="receive_manual_approval.zip"
+        ParameterKey="SendNotificationZip",ParameterValue="receive_manual_approval.zip"
     # wait for lambda stack to complete, about 30s
     sleep 60
 
@@ -119,6 +120,15 @@ The IoT button will blink red -- that's because we're doing things slightly out 
         ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
         ParameterKey="CertificateARN",ParameterValue="$cert_arn" \
         ParameterKey="ButtonListenerLambdaArn",ParameterValue="$(aws cloudformation describe-stacks --stack-name $lambdas_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerLambdaArn\'].OutputValue --output text)"
+
+    aws cloudformation create-stack \
+      --stack-name "test-codepipeline-$(date +%Y%m%d%H%M%S)" \
+      --template-body file://provisioning/codepipeline.yml \
+      --capabilities CAPABILITY_IAM \
+      --parameters \
+        ParameterKey="GitHubToken",ParameterValue="${github_token}" \
+        ParameterKey="NotificationFunctionARN",ParameterValue="$(aws cloudformation describe-stacks --stack-name $lambdas_stack_name --query Stacks[*].Outputs[?OutputKey==\'SendNotificationLambdaArn\'].OutputValue --output text)"
+
 
 Bonus:
 -----

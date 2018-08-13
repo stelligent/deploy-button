@@ -9,18 +9,6 @@ logger.setLevel(logging.INFO)
 def handler(event, context):
     logger.info('REQUEST RECEIVED:\n {}'.format(event))
     logger.info('REQUEST RECEIVED:\n {}'.format(context))
-    if event['RequestType'] == 'Create':
-        logger.info('CREATE!')
-        sendResponse(event, context, "SUCCESS", { "Message": "Resource creation successful!" })
-    elif event['RequestType'] == 'Update':
-        logger.info('UPDATE!')
-        sendResponse(event, context, "SUCCESS", { "Message": "Resource update successful!" })
-    elif event['RequestType'] == 'Delete':
-        logger.info('DELETE!')
-        sendResponse(event, context, "SUCCESS", { "Message": "Resource deletion successful!" })
-    else:
-        logger.info('FAILED!')
-        sendResponse(event, context, "FAILED", { "Message": "Unexpected event received from CloudFormation" })
 
 def sendResponse(event, context, responseStatus, responseData):
     responseBody = json.dumps({

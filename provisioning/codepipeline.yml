@@ -8,6 +8,8 @@ Parameters:
   GitHubToken:
     Type: String
     NoEcho: true
+  NotificationFunctionARN:
+    Type: String
 
 Resources:
   ArtifactStoreBucket:
@@ -23,72 +25,64 @@ Resources:
         Type: S3
       DisableInboundStageTransitions: []
       Name: "SamplePipelinewithManualStep"
-      RoleArn: !Ref PipelineRole
+      RoleArn: !GetAtt 'PipelineRole.Arn'
       Stages:
-        - name: Source
-          actions:
-            - inputArtifacts: []
-              name: Source
-              actionTypeId:
-                category: Source
-                owner: ThirdParty
-                version: '1'
-                provider: GitHub
-              outputArtifacts:
-                - name: MyApp
-              configuration:
-                Owner: stelligent
-                Repo: deploy-button
-                PollForSourceChanges: 'false'
-                Branch: master
-                OAuthToken: !Ref GitHubToken
-              runOrder: 1
-        - name: Build
-          actions:
-            - inputArtifacts:
-                - name: MyApp
-              name6: Build
-              actionTypeId:
-                category: Build
-                owner: AWS
-                version: '1'
-                provider: CodeBuild
-              outputArtifacts:
-                - name7: MyAppBuilt
-              configuration:
-                ProjectName: JonnyTest
-              runOrder: 1
-        - name8: manual-approval
-          actions:
-            - inputArtifacts: []
-              name9: jonny-says-so
-              actionTypeId:
-                category: Approval
-                owner: AWS
-                version: '1'
-                provider: Manual
-              outputArtifacts: []
-              configuration:
-                NotificationArn: arn:aws:sns:us-east-1:324320755747:aws-iot-button-sns-topic
-              runOrder: 1
-        - name0: Staging
-          actions:
-            - inputArtifacts:
-                - name10: MyApp
-              name11: jonny-test-iot-button-20180618153106
-              actionTypeId:
-                category: Deploy
-                owner: AWS
-                version: '1'
-                provider: CloudFormation
-              outputArtifacts: []
-              configuration:
-                StackName: jonny-test-iot-button-20180618153106
-                ActionMode: CREATE_UPDATE
-                RoleArn: arn:aws:iam::324320755747:role/basic-pipeline-CFNRole-100HDE2HLSALM
-                Capabilities: CAPABILITY_NAMED_IAM
-                TemplatePath: MyApp::iotbutton.yml
-              runOrder: 1
+      - Name: Source
+        Actions:
+        - InputArtifacts: []
+          Name: Source
+          ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Provider: GitHub
+            Version: 1
+          OutputArtifacts:
+          - Name: DeployButton
+          Configuration:
+            Owner: stelligent
+            Repo: deploy-button
+            PollForSourceChanges: 'false'
+            Branch: master
+            OAuthToken: !Ref GitHubToken
+          RunOrder: 1
+      - Name: Gate
+        Actions:
+        - Name: Notify
+          ActionTypeId:
+            Category: Invoke
+            Owner: AWS
+            Version: '1'
+            Provider: Lambda
+          Configuration:
+            FunctionName: !Ref NotificationFunctionARN
+          RunOrder: 1
+        - InputArtifacts: []
+          Name: ManualApproval
+          ActionTypeId:
+            Category: Approval
+            Owner: AWS
+            Provider: Manual
+            Version: 1
+          OutputArtifacts: []
+          Configuration: {}
+          RunOrder: 2
+      - Name: Deploy
+        Actions:
+        - InputArtifacts:
+          - Name: DeployButton
+          Name: deploy-dummy-stack
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: 1
+          OutputArtifacts: []
+          Configuration:
+            StackName: dummy-deployment-stack
+            ActionMode: CREATE_UPDATE
+            RoleArn: !GetAtt 'CFNRole.Arn'
+            TemplatePath: DeployButton::provisioning/dummy.yml
+          RunOrder: 1
 
   CFNRole:
     Type: AWS::IAM::Role
@@ -107,10 +101,9 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Action:
-                  - 'ec2:*'
+                  - 'ssm:*'
                 Effect: Allow
                 Resource: '*'
-              
   PipelineRole:
     Type: AWS::IAM::Role
     Properties:
@@ -140,50 +133,6 @@ Resources:
                 - 'cloudformation:SetStackPolicy'
                 - 'iam:PassRole'
                 - 'sns:Publish'
+                - 'lambda:*'
                 Effect: Allow
                 Resource: '*'
-  PipelineBuildStep:  
-    Type: "AWS::CodeBuild::Project"
-    Properties: 
-      Artifacts:
-        Name: button_press_lambas
-        Type: CODEPIPELINE
-      Description: "Zip with lambda function code inside"
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/ubuntu-base:14.04
-      Name: DeployButtonLambdaBuild
-      ServiceRole: !Ref CodeBuildRole
-      Source:
-        Type: CODEPIPELINE 
-      TimeoutInMinutes: 5
-  CodeBuildRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-        - Action: ['sts:AssumeRole']
-          Effect: Allow
-          Principal:
-            Service: [codebuild.amazonaws.com]
-        Version: '2012-10-17'
-      Path: /
-      Policies:
-        - PolicyName: CodeBuildAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action:
-                - 'logs:*'
-                - 'ec2:CreateNetworkInterface'
-                - 'ec2:DescribeNetworkInterfaces'
-                - 'ec2:DeleteNetworkInterface'
-                - 'ec2:DescribeSubnets'
-                - 'ec2:DescribeSecurityGroups'
-                - 'ec2:DescribeDhcpOptions'
-                - 'ec2:DescribeVpcs'
-                - 'ec2:CreateNetworkInterfacePermission'
-                Effect: Allow
-                Resource: '*'
- 
