@@ -89,10 +89,17 @@ Resources:
                 Action:
                   - ec2:DescribeImages
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - codepipeline:PutJobSuccessResult
+                  - codepipeline:PutJobFailureResult
+                Resource: '*'
+
+
 Outputs:
   ButtonListenerLambdaArn:
     Description: The Lambda Function that the button press will trigger
     Value: !GetAtt 'ReceiveButtonPress.Arn'
-  SendNotificationLambdaArn:
+  SendNotificationLambdaName:
     Description: The Lambda Function that the button press will trigger
-    Value: !GetAtt 'SendNotification.Arn'
+    Value: !Ref 'SendNotification'

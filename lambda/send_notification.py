@@ -1,6 +1,7 @@
 import json
 import httplib
 import logging
+import boto3
 from urllib2 import build_opener, HTTPHandler, Request
 
 logger = logging.getLogger()
@@ -9,6 +10,11 @@ logger.setLevel(logging.INFO)
 def handler(event, context):
     logger.info('REQUEST RECEIVED:\n {}'.format(event))
     logger.info('REQUEST RECEIVED:\n {}'.format(context))
+    code_pipeline = boto3.client('codepipeline')
+    job = event['CodePipeline.job']['id']
+    logger.info('jobid = {}'.format(job))
+    code_pipeline.put_job_success_result(jobId=job)
+
 
 def sendResponse(event, context, responseStatus, responseData):
     responseBody = json.dumps({

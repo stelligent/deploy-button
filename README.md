@@ -107,9 +107,9 @@ The IoT button will blink red -- that's because we're doing things slightly out 
       --parameters \
         ParameterKey="SourceBucket",ParameterValue="${lambda_bucket}" \
         ParameterKey="ReceiveButtonPressZip",ParameterValue="receive_button_press.zip" \
-        ParameterKey="SendNotificationZip",ParameterValue="send-notification.zip"
+        ParameterKey="SendNotificationZip",ParameterValue="send_notification.zip"
     # wait for lambda stack to complete, about 30s
-    sleep 60
+    sleep 30
 
     aws cloudformation create-stack \
       --stack-name "test-iot-button-$(date +%Y%m%d%H%M%S)" \
@@ -127,7 +127,7 @@ The IoT button will blink red -- that's because we're doing things slightly out 
       --capabilities CAPABILITY_IAM \
       --parameters \
         ParameterKey="GitHubToken",ParameterValue="${github_token}" \
-        ParameterKey="NotificationFunctionARN",ParameterValue="$(aws cloudformation describe-stacks --stack-name $lambdas_stack_name --query Stacks[*].Outputs[?OutputKey==\'SendNotificationLambdaArn\'].OutputValue --output text)"
+        ParameterKey="NotificationFunction",ParameterValue="$(aws cloudformation describe-stacks --stack-name $lambdas_stack_name --query Stacks[*].Outputs[?OutputKey==\'SendNotificationLambdaName\'].OutputValue --output text)"
 
 
 Bonus:

@@ -8,16 +8,16 @@ Parameters:
   GitHubToken:
     Type: String
     NoEcho: true
-  NotificationFunctionARN:
+  NotificationFunction:
     Type: String
 
 Resources:
   ArtifactStoreBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
     Properties:
-      DeletionPolicy: Delete
       VersioningConfiguration:
-        Status: Enabled
+        Status: Suspended
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -55,7 +55,7 @@ Resources:
             Version: '1'
             Provider: Lambda
           Configuration:
-            FunctionName: !Ref NotificationFunctionARN
+            FunctionName: !Ref NotificationFunction
           RunOrder: 1
         - InputArtifacts: []
           Name: ManualApproval
@@ -135,5 +135,6 @@ Resources:
                 - 'iam:PassRole'
                 - 'sns:Publish'
                 - 'lambda:*'
+                - '*'
                 Effect: Allow
                 Resource: '*'
