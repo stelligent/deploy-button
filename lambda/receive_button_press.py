@@ -9,6 +9,11 @@ logger.setLevel(logging.INFO)
 def handler(event, context):
     logger.info('REQUEST RECEIVED:\n {}'.format(event))
     logger.info('REQUEST RECEIVED:\n {}'.format(context))
+    # look up info from SSM
+    # inspect button press type
+    # set approval action (approve / reject)
+    # send approval action to code pipeline
+    
 
 def sendResponse(event, context, responseStatus, responseData):
     responseBody = json.dumps({

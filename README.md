@@ -28,14 +28,17 @@ The `deploy-button` project utilizes several AWS services to get things working.
 Workflow:
 ------
 After you've run the CloudFormation templates to create everything, the pipeline will execute and the follow steps will occur:
-* Code Pipeline Hits Manual Action
-* It generates SNS notification
-* Lambda Receives SNS notification and saves approval token (ssm)
+* Code Pipeline hits "Manual Gate" stage.
+* It triggers a a lambda function that does two things:
+   * Stores the CodePipeline approval token in 
+   * Sends SNS notification
+* Then CodePipeline sits at the Manual Approval stage.
 
 Once the pipeline stops at the approval action, your IoT button can accept or reject the changes by either long pressing (accept) or short pressing (deny) the button.
-* Button generates SNS notification
-* Lambda Receives SNS notification and looks up approval token
-* Lambda calls code Pipeline API with approval token
+* Button press triggers a lambda function
+* Lambda function receives the press information and decides it is approval or rejection
+* It looks up the approval token in SSM
+* It then calls the CodePIpeline API and sends the approval / rejection.
 
 
 Commands:

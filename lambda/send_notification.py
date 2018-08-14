@@ -13,6 +13,10 @@ def handler(event, context):
     code_pipeline = boto3.client('codepipeline')
     job = event['CodePipeline.job']['id']
     logger.info('jobid = {}'.format(job))
+    # take approval notification token
+
+
+
     code_pipeline.put_job_success_result(jobId=job)
 
 
