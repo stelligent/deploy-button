@@ -53,6 +53,7 @@ First you have to configure the IoT button to connect to your AWS account. This 
     rm keys-and-cert.json
 
 You'll also want to run these two commands and note the output:
+
     aws iot describe-endpoint | jq .endpointAddress | tr -d '"' | awk -F. '{ print $1}'
     aws iot describe-endpoint | jq .endpointAddress | tr -d '"' | awk -F. '{ print $3}'
 
@@ -80,10 +81,10 @@ The IoT button will blink red -- that's because we're doing things slightly out 
     export lambda_bucket=test-lambda-functions-$(date +%Y%m%d%H%M%S)
 
     aws cloudformation create-stack \
-      --stack-name "test-ssm-$(date +%Y%m%d%H%M%S)" \
+      --stack-name "deploybutton-ssm-$(date +%Y%m%d%H%M%S)" \
       --template-body file://provisioning/ssm.yml
 
-    sns_stack_name="test-sns-$(date +%Y%m%d%H%M%S)"
+    sns_stack_name="deploybutton-sns-$(date +%Y%m%d%H%M%S)"
     aws cloudformation create-stack \
       --stack-name $sns_stack_name \
       --template-body file://provisioning/sns.yml \
@@ -101,7 +102,7 @@ The IoT button will blink red -- that's because we're doing things slightly out 
       rm -rf tmp
     popd
 
-    lambdas_stack_name=test-lambdas-$(date +%Y%m%d%H%M%S)
+    lambdas_stack_name=deploybutton-lambdas-$(date +%Y%m%d%H%M%S)
     aws cloudformation create-stack \
       --stack-name "$lambdas_stack_name" \
       --template-body file://provisioning/lambdas.yml \
@@ -115,7 +116,7 @@ The IoT button will blink red -- that's because we're doing things slightly out 
     sleep 30
 
     aws cloudformation create-stack \
-      --stack-name "test-iot-button-$(date +%Y%m%d%H%M%S)" \
+      --stack-name "deploybutton-iot-button-$(date +%Y%m%d%H%M%S)" \
       --template-body file://provisioning/iotbutton.yml \
       --capabilities CAPABILITY_IAM \
       --region us-east-1 \
@@ -125,7 +126,7 @@ The IoT button will blink red -- that's because we're doing things slightly out 
         ParameterKey="ButtonListenerLambdaArn",ParameterValue="$(aws cloudformation describe-stacks --stack-name $lambdas_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerLambdaArn\'].OutputValue --output text)"
 
     aws cloudformation create-stack \
-      --stack-name "test-codepipeline-$(date +%Y%m%d%H%M%S)" \
+      --stack-name "deploybutton-codepipeline-$(date +%Y%m%d%H%M%S)" \
       --template-body file://provisioning/codepipeline.yml \
       --capabilities CAPABILITY_IAM \
       --parameters \
