@@ -80,40 +80,15 @@ The IoT button will blink red -- that's because we're doing things slightly out 
     # this can be whatever you like, leaving it as is should work too.
     export lambda_bucket=test-lambda-functions-$(date +%Y%m%d%H%M%S)
 
-    aws cloudformation create-stack \
-      --stack-name "deploybutton-ssm-$(date +%Y%m%d%H%M%S)" \
-      --template-body file://provisioning/ssm.yml
-
     sns_stack_name="deploybutton-sns-$(date +%Y%m%d%H%M%S)"
     aws cloudformation create-stack \
       --stack-name $sns_stack_name \
       --template-body file://provisioning/sns.yml \
       --capabilities CAPABILITY_IAM
 
-    # put lambda functions into S3 so the CloudFormation stacks can find them
-    pushd lambda
-      aws s3 mb s3://${lambda_bucket}
-      rm -rf tmp
-      mkdir -p tmp
-      zip tmp/receive_button_press.zip receive_button_press.py
-      zip tmp/send_notification.zip send_notification.py
-      aws s3 cp tmp/receive_button_press.zip s3://${lambda_bucket}/receive_button_press.zip
-      aws s3 cp tmp/send_notification.zip s3://${lambda_bucket}/send_notification.zip
-      rm -rf tmp
-    popd
-
     lambdas_stack_name=deploybutton-lambdas-$(date +%Y%m%d%H%M%S)
-    aws cloudformation create-stack \
-      --stack-name "$lambdas_stack_name" \
-      --template-body file://provisioning/lambdas.yml \
-      --capabilities CAPABILITY_IAM \
-      --disable-rollback \
-      --parameters \
-        ParameterKey="SourceBucket",ParameterValue="${lambda_bucket}" \
-        ParameterKey="ReceiveButtonPressZip",ParameterValue="receive_button_press.zip" \
-        ParameterKey="SendNotificationZip",ParameterValue="send_notification.zip"
-    # wait for lambda stack to complete, about 30s
-    sleep 30
+    aws cloudformation package --template-file provisioning/lambdas.yml --s3-bucket $lambda_bucket --output-template-file /tmp/packaged.yml
+    aws cloudformation deploy --template-file /tmp/packaged.yml --stack-name deploybutton-lambdas-20190319153805 --capabilities CAPABILITY_IAM
 
     aws cloudformation create-stack \
       --stack-name "deploybutton-iot-button-$(date +%Y%m%d%H%M%S)" \

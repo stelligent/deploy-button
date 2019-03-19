@@ -1,24 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: AWS CloudFormation to set up lambda functions to be used for a deploy button for code pipeline.
-Parameters:
-  SourceBucket:
-    Description: The name of the bucket that contains your packaged source
-    Type: String
-  ReceiveButtonPressZip:
-    Description: The name of the ZIP package for the ReceiveButtonPress function
-    Type: String
-    Default: custom-resource.zip
-  SendNotificationZip:
-    Description: The name of the ZIP package for the SendNotification function
-    Type: String
-    Default: custom-resource.zip
 Resources:
   ReceiveButtonPress:
     Type: AWS::Lambda::Function
     Properties:
-      Code:
-        S3Bucket: !Ref 'SourceBucket'
-        S3Key: !Ref 'ReceiveButtonPressZip'
+      Code: 'lambda/receive_button_press.py'
       Handler: 'receive_button_press.handler'
       Role: !GetAtt 'RecieveButtonPressExecutionRole.Arn'
       Runtime: 'python2.7'
@@ -54,9 +40,7 @@ Resources:
   SendNotification:
     Type: AWS::Lambda::Function
     Properties:
-      Code:
-        S3Bucket: !Ref 'SourceBucket'
-        S3Key: !Ref 'SendNotificationZip'
+      Code: 'lambda/send_notification.py'
       Handler: 'send_notification.handler'
       Role: !GetAtt 'SendNotificationExecutionRole.Arn'
       Runtime: 'python2.7'

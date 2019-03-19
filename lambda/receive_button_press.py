@@ -9,11 +9,29 @@ logger.setLevel(logging.INFO)
 def handler(event, context):
     logger.info('REQUEST RECEIVED:\n {}'.format(event))
     logger.info('REQUEST RECEIVED:\n {}'.format(context))
-    # look up info from SSM
-    # inspect button press type
-    # set approval action (approve / reject)
-    # send approval action to code pipeline
-    
+    # this will need to be un-hardcoded at some point
+    pipelineName = 'SamplePipelinewithManualStep'
+    response = client.get_pipeline_state(
+        name=pipelineName
+    )
+
+    # is there any way these can be dynamically looked up?
+    # maybe if we require certain names for the stage & action?
+    token = response['stageStates'][1]['actionStates'][1]['latestExecution']['token']
+    stageName = response['stageStates'][1]['stageName']
+    actionName = response['stageStates'][1]['actionStates'][1]['actionName']
+
+    client.put_approval_result(
+        pipelineName=pipelineName,
+        stageName=stageName,
+        actionName=actionName,
+        result={
+            'summary': 'Approved via IOT Button Press',
+            'status': 'Approved'
+        },
+        token=token
+    )
+
 
 def sendResponse(event, context, responseStatus, responseData):
     responseBody = json.dumps({
