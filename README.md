@@ -79,6 +79,7 @@ The IoT button will blink red -- that's because we're doing things slightly out 
     export github_token=12345678908754321
     # this can be whatever you like, leaving it as is should work too.
     export lambda_bucket=test-lambda-functions-$(date +%Y%m%d%H%M%S)
+    aws s3 mb s3://$lambda_bucket
 
     sns_stack_name="deploybutton-sns-$(date +%Y%m%d%H%M%S)"
     aws cloudformation create-stack \
@@ -86,9 +87,9 @@ The IoT button will blink red -- that's because we're doing things slightly out 
       --template-body file://provisioning/sns.yml \
       --capabilities CAPABILITY_IAM
 
-    lambdas_stack_name=deploybutton-lambdas-$(date +%Y%m%d%H%M%S)
+    export lambdas_stack_name=deploybutton-lambdas-$(date +%Y%m%d%H%M%S)
     aws cloudformation package --template-file provisioning/lambdas.yml --s3-bucket $lambda_bucket --output-template-file /tmp/packaged.yml
-    aws cloudformation deploy --template-file /tmp/packaged.yml --stack-name deploybutton-lambdas-20190319153805 --capabilities CAPABILITY_IAM
+    aws cloudformation deploy --template-file /tmp/packaged.yml --stack-name $lambdas_stack_name --capabilities CAPABILITY_IAM
 
     aws cloudformation create-stack \
       --stack-name "deploybutton-iot-button-$(date +%Y%m%d%H%M%S)" \
