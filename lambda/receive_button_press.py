@@ -19,11 +19,11 @@ def handler(event, context):
 
     # is there any way these can be dynamically looked up?
     # maybe if we require certain names for the stage & action?
-    token = response['stageStates'][1]['actionStates'][1]['latestExecution']['token']
+    token = response['stageStates'][1]['actionStates'][0]['latestExecution']['token']
     logger.info('token:\t {}'.format(token))
     stageName = response['stageStates'][1]['stageName']
     logger.info('stage:\t {}'.format(stageName))
-    actionName = response['stageStates'][1]['actionStates'][1]['actionName']
+    actionName = response['stageStates'][1]['actionStates'][0]['actionName']
     logger.info('action:\t {}'.format(actionName))
 
     response = client.put_approval_result(
