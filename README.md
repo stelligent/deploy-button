@@ -13,12 +13,10 @@ The `deploy-button` project utilizes several AWS services to get things working.
 * CodePipeline:
   *  Sample Pipeline
 * SNS Topics:
-  * Manual Approvals
+  * Notify for Manual Approvals
 * Lambda Functions:
-  * Save Approval Token
-  * Approve/Deny
-* SSM Parameter: 
-  * Approval Token
+  * Process button press
+  * Send Notification
 * IoT:
   * Thing
   * Policy
@@ -124,3 +122,5 @@ This project leverages IoT, which you may need to troubleshoot. Unfortunately, I
     aws iot set-v2-logging-options \
         --role-arn $(aws cloudformation describe-stacks --stack-name $iot_logging_role_stack --query Stacks[*].Outputs[?OutputKey==\'IoTLogRole\'].OutputValue --output text) \
         --default-log-level INFO
+
+After you run that, IOT should log to the CloudWatch Log Group `AWSIotLogsV2`.
