@@ -48,15 +48,6 @@ Resources:
           RunOrder: 1
       - Name: Gate
         Actions:
-        - Name: Notify
-          ActionTypeId:
-            Category: Invoke
-            Owner: AWS
-            Version: '1'
-            Provider: Lambda
-          Configuration:
-            FunctionName: !Ref NotificationFunction
-          RunOrder: 1
         - InputArtifacts: []
           Name: ManualApproval
           ActionTypeId:
