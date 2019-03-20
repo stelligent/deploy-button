@@ -2,6 +2,7 @@ import json
 import httplib
 import logging
 from urllib2 import build_opener, HTTPHandler, Request
+import boto3
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -11,6 +12,7 @@ def handler(event, context):
     logger.info('REQUEST RECEIVED:\n {}'.format(context))
     # this will need to be un-hardcoded at some point
     pipelineName = 'SamplePipelinewithManualStep'
+    client = boto3.client('codepipeline')
     response = client.get_pipeline_state(
         name=pipelineName
     )
