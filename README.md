@@ -1,9 +1,9 @@
 deploy-button :ship: :red_circle:
 ======
 
-CodePipeline supports Manual Approval actions that allow you to put manual gates in your pipeline. IoT Buttons allow you to have a real world button hooked up to a Lambda function. This project configures your IoT button to approve (or reject) your CodePipeline manual approval steps.
+CodePipeline supports Manual Approval actions that allow you to put manual gates in your pipeline. IoT Buttons allow you to have a real world button hooked up to a Lambda function. This project configures your IoT button to approve your CodePipeline manual approval steps.
 
-*This is currently a work in progress; nothing actually is working right now.*
+*This is currently a work in progress, things only kinda work now..*
 
 What's in the box
 ------
@@ -12,11 +12,8 @@ The `deploy-button` project utilizes several AWS services to get things working.
 
 * CodePipeline:
   *  Sample Pipeline
-* SNS Topics:
-  * Notify for Manual Approvals
 * Lambda Functions:
   * Process button press
-  * Send Notification
 * IoT:
   * Thing
   * Policy
@@ -26,17 +23,11 @@ The `deploy-button` project utilizes several AWS services to get things working.
 Workflow:
 ------
 After you've run the CloudFormation templates to create everything, the pipeline will execute and the follow steps will occur:
-* Code Pipeline hits "Manual Gate" stage.
-* It triggers a a lambda function that does two things:
-   * Stores the CodePipeline approval token in 
-   * Sends SNS notification
-* Then CodePipeline sits at the Manual Approval stage.
-
-Once the pipeline stops at the approval action, your IoT button can accept or reject the changes by either long pressing (accept) or short pressing (deny) the button.
+* Code Pipeline hits "Manual Gate" stage and waits.
+* Once the pipeline stops at the approval action, your IoT button can accept the changes by pressing the button.
 * Button press triggers a lambda function
-* Lambda function receives the press information and decides it is approval or rejection
-* It looks up the approval token in SSM
-* It then calls the CodePIpeline API and sends the approval / rejection.
+* Lambda function receives the press information and looks up the pipeline information.
+* It then calls the CodePipeline API and sends the approval.
 
 
 Commands:
@@ -74,6 +65,7 @@ The IoT button will blink red -- that's because we're doing things slightly out 
 
     # The DSN will be on the back of your IoT button
     export iot_button_dsn=1234567890
+    # The Github token you'll need to generate from your github account page
     export github_token=12345678908754321
     # this can be whatever you like, leaving it as is should work too.
     export lambda_bucket=test-lambda-functions-$(date +%Y%m%d%H%M%S)
