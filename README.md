@@ -72,12 +72,18 @@ The IoT button will blink red -- that's because we're doing things slightly out 
     aws s3 mb s3://$lambda_bucket
 
     export lambdas_stack_name=deploybutton-lambdas-$(date +%Y%m%d%H%M%S)
-    aws cloudformation package --template-file provisioning/everything.yml --s3-bucket $lambda_bucket --output-template-file /tmp/packaged.yml 
-    aws cloudformation deploy --template-file /tmp/packaged.yml --stack-name $lambdas_stack_name --capabilities CAPABILITY_IAM \
+    aws cloudformation package \
+      --template-file provisioning/everything.yml \
+      --s3-bucket $lambda_bucket \
+      --output-template-file /tmp/packaged.yml
+    aws cloudformation deploy \
+      --template-file /tmp/packaged.yml \
+      --stack-name $lambdas_stack_name \
+      --capabilities CAPABILITY_IAM \
       --parameter-overrides \
         ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
         ParameterKey="CertificateARN",ParameterValue="$cert_arn" \
-        ParameterKey="GitHubToken",ParameterValue="${github_token}"         
+        ParameterKey="GitHubToken",ParameterValue="${github_token}"
 
 
 Bonus:
