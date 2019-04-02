@@ -71,33 +71,13 @@ The IoT button will blink red -- that's because we're doing things slightly out 
     export lambda_bucket=test-lambda-functions-$(date +%Y%m%d%H%M%S)
     aws s3 mb s3://$lambda_bucket
 
-    sns_stack_name="deploybutton-sns-$(date +%Y%m%d%H%M%S)"
-    aws cloudformation create-stack \
-      --stack-name $sns_stack_name \
-      --template-body file://provisioning/sns.yml \
-      --capabilities CAPABILITY_IAM
-
     export lambdas_stack_name=deploybutton-lambdas-$(date +%Y%m%d%H%M%S)
-    aws cloudformation package --template-file provisioning/lambdas.yml --s3-bucket $lambda_bucket --output-template-file /tmp/packaged.yml
-    aws cloudformation deploy --template-file /tmp/packaged.yml --stack-name $lambdas_stack_name --capabilities CAPABILITY_IAM
-
-    aws cloudformation create-stack \
-      --stack-name "deploybutton-iot-button-$(date +%Y%m%d%H%M%S)" \
-      --template-body file://provisioning/iotbutton.yml \
-      --capabilities CAPABILITY_IAM \
-      --region us-east-1 \
-      --parameters \
+    aws cloudformation package --template-file provisioning/everything.yml --s3-bucket $lambda_bucket --output-template-file /tmp/packaged.yml 
+    aws cloudformation deploy --template-file /tmp/packaged.yml --stack-name $lambdas_stack_name --capabilities CAPABILITY_IAM \
+      --parameter-overrides \
         ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
         ParameterKey="CertificateARN",ParameterValue="$cert_arn" \
-        ParameterKey="ButtonListenerLambdaArn",ParameterValue="$(aws cloudformation describe-stacks --stack-name $lambdas_stack_name --query Stacks[*].Outputs[?OutputKey==\'ButtonListenerLambdaArn\'].OutputValue --output text)"
-
-    aws cloudformation create-stack \
-      --stack-name "deploybutton-codepipeline-$(date +%Y%m%d%H%M%S)" \
-      --template-body file://provisioning/codepipeline.yml \
-      --capabilities CAPABILITY_IAM \
-      --parameters \
-        ParameterKey="GitHubToken",ParameterValue="${github_token}" \
-        ParameterKey="NotificationFunction",ParameterValue="$(aws cloudformation describe-stacks --stack-name $lambdas_stack_name --query Stacks[*].Outputs[?OutputKey==\'SendNotificationLambdaName\'].OutputValue --output text)"
+        ParameterKey="GitHubToken",ParameterValue="${github_token}"         
 
 
 Bonus:

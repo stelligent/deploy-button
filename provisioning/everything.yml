@@ -1,0 +1,235 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation to set up lambda functions to be used for a deploy button for code pipeline.
+Parameters:
+  IoTButtonDSN:
+    Type: String
+    AllowedPattern: G030[A-Z][A-Z][0=9][0-9][0-9][0-5][0-9][1-7][0-9A-HJ-NP-X][0-9A-HJ-NP-X][0-9A-HJ-NP-X][0-9A-HJ-NP-X]
+    Description: The device serial number (DSN) of the AWS IoT Button. This can be found on the back of the button.
+  CertificateARN:
+    Type: String
+    Description: The Amazon Resource Name (ARN) of the existing AWS IoT certificate.
+  GitHubToken:
+    Type: String
+    NoEcho: true
+
+Resources:
+  ReceiveButtonPress:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 'lambda/receive_button_press.py'
+      Handler: 'receive_button_press.handler'
+      Role: !GetAtt 'RecieveButtonPressExecutionRole.Arn'
+      Runtime: 'python2.7'
+      Timeout: '30'
+  RecieveButtonPressExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeImages
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - codepipeline:PutJobSuccessResult
+                  - codepipeline:PutJobFailureResult
+                  - codepipeline:GetPipelineState
+                  - codepipeline:PutApprovalResult
+                Resource: '*'
+  IoTThing:
+    Type: AWS::IoT::Thing
+    Properties:
+      ThingName: !Join
+        - ''
+        - - iotbutton_
+          - !Ref 'IoTButtonDSN'
+  IoTPolicy:
+    Type: AWS::IoT::Policy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action: iot:Publish
+            Effect: Allow
+            Resource: !Join
+              - ''
+              - - 'arn:aws:iot:'
+                - !Ref 'AWS::Region'
+                - ':'
+                - !Ref 'AWS::AccountId'
+                - :topic/iotbutton/
+                - !Ref 'IoTButtonDSN'
+  IoTPolicyPrincipalAttachment:
+    Type: AWS::IoT::PolicyPrincipalAttachment
+    Properties:
+      PolicyName: !Ref 'IoTPolicy'
+      Principal: !Ref 'CertificateARN'
+  IoTThingPrincipalAttachment:
+    Type: AWS::IoT::ThingPrincipalAttachment
+    Properties:
+      Principal: !Ref 'CertificateARN'
+      ThingName: !Ref 'IoTThing'
+
+  IoTTopicRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: !Join
+        - ''
+        - - iotbutton_
+          - !Ref 'IoTButtonDSN'
+      TopicRulePayload:
+        Actions:
+          - Lambda:
+              FunctionArn: !GetAtt 'ReceiveButtonPress.Arn'
+        RuleDisabled: false
+        Sql: !Join
+          - ''
+          - - SELECT * FROM 'iotbutton/
+            - !Ref 'IoTButtonDSN'
+            - ''''
+  ButtonPressLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !GetAtt 'ReceiveButtonPress.Arn'
+      Principal: iot.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !GetAtt IoTTopicRule.Arn
+
+  ArtifactStoreBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      VersioningConfiguration:
+        Status: Suspended
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref 'ArtifactStoreBucket'
+        Type: S3
+      DisableInboundStageTransitions: []
+      Name: "SamplePipelinewithManualStep"
+      RoleArn: !GetAtt 'PipelineRole.Arn'
+      Stages:
+      - Name: Source
+        Actions:
+        - InputArtifacts: []
+          Name: Source
+          ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Provider: GitHub
+            Version: 1
+          OutputArtifacts:
+          - Name: DeployButton
+          Configuration:
+            Owner: stelligent
+            Repo: deploy-button
+            PollForSourceChanges: 'false'
+            Branch: master
+            OAuthToken: !Ref GitHubToken
+          RunOrder: 1
+      - Name: Gate
+        Actions:
+        - InputArtifacts: []
+          Name: ManualApproval
+          ActionTypeId:
+            Category: Approval
+            Owner: AWS
+            Provider: Manual
+            Version: 1
+          OutputArtifacts: []
+          Configuration: {}
+          RunOrder: 2
+      - Name: Deploy
+        Actions:
+        - InputArtifacts:
+          - Name: DeployButton
+          Name: deploy-dummy-stack
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: 1
+          OutputArtifacts: []
+          Configuration:
+            StackName: dummy-deployment-stack
+            ActionMode: CREATE_UPDATE
+            RoleArn: !GetAtt 'CFNRole.Arn'
+            TemplatePath: DeployButton::provisioning/dummy.yml
+          RunOrder: 1
+
+  CFNRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [cloudformation.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyName: CloudFormationRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - 'ssm:*'
+                Effect: Allow
+                Resource: '*'
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [codepipeline.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyName: CodePipelineAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                - 's3:*'
+                - 'cloudformation:CreateStack'
+                - 'cloudformation:DescribeStacks'
+                - 'cloudformation:DeleteStack'
+                - 'cloudformation:UpdateStack'
+                - 'cloudformation:CreateChangeSet'
+                - 'cloudformation:ExecuteChangeSet'
+                - 'cloudformation:DeleteChangeSet'
+                - 'cloudformation:DescribeChangeSet'
+                - 'cloudformation:SetStackPolicy'
+                - 'iam:PassRole'
+                - 'sns:Publish'
+                - 'lambda:*'
+                - '*'
+                Effect: Allow
+                Resource: '*'
