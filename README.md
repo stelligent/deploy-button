@@ -3,8 +3,6 @@ deploy-button :ship: :red_circle:
 
 CodePipeline supports Manual Approval actions that allow you to put manual gates in your pipeline. IoT Buttons allow you to have a real world button hooked up to a Lambda function. This project configures your IoT button to approve your CodePipeline manual approval steps.
 
-*This is currently a work in progress, things only kinda work now..*
-
 What's in the box
 ------
 
@@ -28,7 +26,6 @@ After you've run the CloudFormation templates to create everything, the pipeline
 * Button press triggers a lambda function
 * Lambda function receives the press information and looks up the pipeline information.
 * It then calls the CodePipeline API and sends the approval.
-
 
 Commands:
 -----
@@ -62,7 +59,6 @@ Next is the annoying bit: the IoT button is configured by connecting to it's wir
 
 The IoT button will blink red -- that's because we're doing things slightly out of order than it prefers, so don't worry about it. With IoT button is configured, we can set up the resources to support it. You'll need to set the values of the first two variables.
 
-
     # The DSN will be on the back of your IoT button
     export iot_button_dsn=1234567890
     # The Github token you'll need to generate from your github account page
@@ -84,7 +80,6 @@ The IoT button will blink red -- that's because we're doing things slightly out 
         ParameterKey="IoTButtonDSN",ParameterValue="$iot_button_dsn" \
         ParameterKey="CertificateARN",ParameterValue="$cert_arn" \
         ParameterKey="GitHubToken",ParameterValue="${github_token}"
-
 
 Bonus:
 -----
