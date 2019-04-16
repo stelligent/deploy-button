@@ -97,3 +97,7 @@ This project leverages IoT, which you may need to troubleshoot. Unfortunately, I
         --default-log-level INFO
 
 After you run that, IOT should log to the CloudWatch Log Group `AWSIotLogsV2`.
+
+Feedback / Questions / Issues:
+-----
+If you hit any issues getting any of this to run, or if you really have any feedback at all, please open up a Github issue. Also, please feel free to write your own improvements and open up a pull request!
