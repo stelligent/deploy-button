@@ -43,8 +43,8 @@ First you have to configure the IoT button to connect to your AWS account. This 
 
 You'll also want to run these two commands and note the output:
 
-    aws iot describe-endpoint | jq -r .endpointAddress | awk -F. '{ print $1}'
-    aws iot describe-endpoint | jq -r .endpointAddress | awk -F. '{ print $3}'
+    echo "Endpoint Subdomain: $(aws iot describe-endpoint | jq -r .endpointAddress | awk -F. '{ print $1}')"
+    echo "Region: $(aws iot describe-endpoint | jq -r .endpointAddress | awk -F. '{ print $3}')"
 
 Next is the annoying bit: the IoT button is configured by connecting to it's wireless network and pulling up a webpage. You'll need to put the IoT button into configuration mode, connect to it from your computer, and then enter in the appropriate information.
 
