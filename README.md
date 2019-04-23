@@ -36,15 +36,15 @@ First you have to configure the IoT button to connect to your AWS account. This 
 
     # first thing: generate IOT cert
     aws iot create-keys-and-certificate --set-as-active --output json > keys-and-cert.json
-    export cert_arn=$(cat keys-and-cert.json | jq '.certificateArn' | tr -d '"')
-    cat keys-and-cert.json | jq '.certificatePem' | tr -d '"' | awk '{gsub(/\\n/,"\n")}1' > certificate.pem
-    cat keys-and-cert.json | jq '.keyPair.PrivateKey' | tr -d '"' | awk '{gsub(/\\n/,"\n")}1' > private.key
+    export cert_arn=$(cat keys-and-cert.json | jq -r '.certificateArn')
+    cat keys-and-cert.json | jq -r '.certificatePem' | awk '{gsub(/\\n/,"\n")}1' > certificate.pem
+    cat keys-and-cert.json | jq -r '.keyPair.PrivateKey' | awk '{gsub(/\\n/,"\n")}1' > private.key
     rm keys-and-cert.json
 
 You'll also want to run these two commands and note the output:
 
-    aws iot describe-endpoint | jq .endpointAddress | tr -d '"' | awk -F. '{ print $1}'
-    aws iot describe-endpoint | jq .endpointAddress | tr -d '"' | awk -F. '{ print $3}'
+    aws iot describe-endpoint | jq -r .endpointAddress | awk -F. '{ print $1}'
+    aws iot describe-endpoint | jq -r .endpointAddress | awk -F. '{ print $3}'
 
 Next is the annoying bit: the IoT button is configured by connecting to it's wireless network and pulling up a webpage. You'll need to put the IoT button into configuration mode, connect to it from your computer, and then enter in the appropriate information.
 
