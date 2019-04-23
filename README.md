@@ -53,8 +53,8 @@ Next is the annoying bit: the IoT button is configured by connecting to it's wir
 3. Navigate to http://192.168.0.1/index.html
 4. Enter your wifi information -- *note*: if you're on a network that configures wifi via a redirect, you won't be able to use your IoT button.
 5. Under `AWS IoT Configuration`
-  * For `Certificate` upload the file you created above `certificate.pem`
-  * For `Private Key` uploaded the file you created above `private.key`
+  * For `Certificate` upload the `certificate.pem` file you created above
+  * For `Private Key` uploaded the `private.key` file you created above
   * For `Endpoint Subdomain` enter the output from the first command above.
   * For `Region`, enter the output from the second command above.
  6. Check the agreement to terms and conditions box
